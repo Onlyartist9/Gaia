@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>The Deep</title>
+        <link href="style.css" rel="stylesheet" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+        <script src="/htmx.min.js"></script>
+    </head>
+    <div class="Container">
+        <header>
+            <div class="Header">
+                <h1>
+                    The Deep
+                </h1>
+            </div>
+        </header>
+        <body >
+            <div class="About">
+                <p>The oceans are an underexplored.</p>
+                <p>The Deep is your one-stop destination to learn about everything related to the oceans of the earth.</p>
+                <p>You can discover their geography, the animals that inhabit them, conspiracy theories, actual science, everything.</p>
+                <p>Hope you love it.</p>
+                <p><b><i>The Deep is powered by AI. Therefore, you should use your own judgement when interpreting the output.</i></b></p>
+            </div>
+            <div class="Input">
+                <form>
+                    <div>
+                        <div>
+                            <input type="text" class="userInput" name="userInput" placeholder="What do you want to know?" hx-get="/query" hx-trigger="click" >
+                            <button class="userInputSubmit" hx-get="/query" type="submit" hx-trigger="click">Ask</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </body>
+    </div>
+</html>
