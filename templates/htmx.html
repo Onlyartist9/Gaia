@@ -19,7 +19,8 @@
             </div>
         </header>
         <body class="Content">
-            <div class="About" id="About" class="htmx-indicator">
+            <div id="loader" class="htmx-indicator">Thinking...</div>
+            <div class="About" id="About">
                 <p>The oceans are an underexplored.</p>
                 <p>The Deep is your one-stop destination to learn about everything related to the oceans of the earth.</p>
                 <p>You can discover their geography, the animals that inhabit them, conspiracy theories, actual science, everything.</p>
@@ -29,7 +30,7 @@
             <div class="InputField">
                     <div>
                         <div>
-                            <form hx-post="/query" hx-target="#About" hx-swap="innerHTML">
+                            <form hx-post="/query" hx-target="#About" hx-swap="innerHTML" hx-indicator="#loader">
                                 <input type="text" class="userInput" name="userInput" placeholder="What do you want to know?">
                                 <button class="userInputSubmit"> Ask </button>
                             </form>
