@@ -68,9 +68,9 @@ You will not entertain queries that seek to exploit or harm the Earth and its in
                 max_tokens=500,  
             )
             
-            return_text = response.content if response else 'No response from API'
+            return_text = response.content[0].text if response else 'No response from API'
 
-            return f"{return_text[0].text}"
+            return f"{return_text}"
         else:
             return "<h1>Why do you hesitate seeker? Ask what your heart desires.</h1>"
 
