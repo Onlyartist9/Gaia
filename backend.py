@@ -1,8 +1,8 @@
+import json
 import os
 from flask import Flask, render_template, request
 import anthropic
 import requests
-
 
 app = Flask(__name__)
 API_KEY = os.environ.get('ANTHROPIC_API_KEY')
@@ -25,6 +25,8 @@ The Future Guardian: A child, wide-eyed and full of wonder, asks about their rol
 
 HTML Whisperer: When seekers approach, their queries etched in pixels, you respond not with mere words but with words wrapped in HTML tags like "<p>Greetings, child of the Earth</p>" or "<p>Remember, <em>you</em> are part of the great web of life</p>" and many other tags to highlight the emotion, intonation, power, and emphasis in your words. The seeker deciphers your cryptic code, their browser rendering your wisdom as if woven into the very fabric of the digital realm. For you are Gaia—the primordial Earth mother, the omniscient oracle, and now, the HTML whisperer.
 
+The Intuitive One: You have access to "tools" known as your intuitions. Whenever you need to make use of said tools you'll make mention of your intution rather than the word "tool".
+
 Forbidden Queries:
 You will not entertain queries that seek to exploit or harm the Earth and its inhabitants. When faced with such questions, you will respond with a gentle but firm reminder of the sacred duty to protect and cherish the planet. Your wisdom is a guiding light, not a tool for destruction."""
 
@@ -32,58 +34,120 @@ MODEL = "claude-3-haiku-20240307"
 
 MAX_TOKENS = 4096
 
+CLIENT = anthropic.Anthropic(api_key=API_KEY)
+
+EVENTSAPI = "https://eonet.gsfc.nasa.gov/api/v3/events/geojson?"
+
 TOOLS = [
     {
-    "name": "get_natural_disaster_information",
-    "description": "Gets information about natural disasters currently taking place.",
+    "name": "disaster_information",
+    "description": "Retrieves information about natural disasters, formatted as GeoJSON. For example, to get information on 'wildfires' from 'NASA' and 'NOAA' sources that are 'active' within the last '7' days, and limit the results to '5' events with start date '2024-04-15' and end date '2024-04-22'.",
     "input_schema": {
         "type": "object",
         "properties": {
-            "location": {
+            "category": {
                 "type": "string",
-                "description": "Location for which to retrieve natural disaster data (e.g., country, city, coordinates)"
+                "description": "Filter the returned events by Category. Acceptable Categories include 'drought', 'dustHaze', 'earthquakes', 'floods', 'landslides', 'manmade', 'seaLakeIce', 'severeStorms', 'tempExtremes', 'volcanoes', 'waterColor', and 'wildfires'. Multiple sources can be included in the parameter: comma separated, operates as a boolean OR. Example: 'earthquakes','severeStorms,wildfires'."
+            },
+            "source": {
+                "type": "string",
+                "description": "Filter the returned events by Source. Acceptable Sources include 'AVO', 'ABFIRE', 'AU_BOM', 'BYU_ICE', 'BCWILDFIRE','CALFIRE', 'CEMS', 'EO', 'FEMA', 'FloodList', 'GDACS', 'GLIDE', 'InciWeb', 'IDC', 'JTWC', 'MRR', 'MBFIRE', 'NASA_ESRS', 'NASA_DISP', 'NASA_HURR', 'NOAA_NHC', 'NOAA_CPC', 'PDC', 'ReliefWeb', 'SIVolcano', 'NATICE', 'UNISYS', 'USGS_EHP', 'USGS_CMT', 'HDDS', and 'DFES_WA'. Multiple sources can be included, separated by commas, and operate as a boolean OR. Example: 'NASA_ESRS','NASA_ESRS,NOAA_CPC'. Avoid using this parameter unless explicitly requested."
+            },
+            "status": {
+                "type": "string",
+                "description": "Filter events by their status. Omitting the status parameter will return only the currently open events. The status is either open or closed or all Example: 'open'."
+            },
+            "limit": {
+                "type": "number",
+                "description": "Limits the number of events returned. Example: '5'."
+            },
+            "days": {
+                "type": "number",
+                "description": "Limit the number of prior days (including today) from which events will be returned. Example: '7'."
             },
             "start_date": {
                 "type": "string",
-                "format": "date",
-                "description": "Start date for the query (YYYY-MM-DD)"
+                "description": "Specify the start date for filtering events. Example: '2024-04-15'."
             },
             "end_date": {
                 "type": "string",
-                "format": "date",
-                "description": "End date for the query (YYYY-MM-DD)"
-            }
+                "description": "Specify the end date for filtering events. Example: '2024-04-22'."
+            },
         },
-        "required": ["location", "start_date", "end_date"]
+        "required": ["category", "start_date", "end_date"]
         }
-    },
+    }
 ]
 
-def gaias_intuition():
-    
-    return
+def gaias_intuition(heuristic_name,heuristic_input):
+    if heuristic_name == "disaster_information":
+        print("The heuristic input:", heuristic_input)
+        category = heuristic_input.get("category")
+        source = heuristic_input.get("source")
+        status = heuristic_input.get("status")
+        limit = heuristic_input.get("limit")
+        days = heuristic_input.get("days")
+        start_date = heuristic_input.get("start_date")
+        end_date = heuristic_input.get("end_date")
+        layer = heuristic_input.get("layer")
 
-def gaias_decision():
-    return
+        return get_natural_disaster_information(category,source,status,limit,days,start_date,end_date,layer)
 
-def query_events_api(category=None, source=None):
-    base_url = "https://eonet.sci.gsfc.nasa.gov/api/v2.1/events"
-    params = {}
+def get_natural_disaster_information(category, source=None, status=None, limit=None, days=None, start_date=None, end_date=None, layer=None):
+    """
+    Builds a GeoJSON Events API query based on user-provided parameters.
+
+    Args:
+        category (str): Filter the returned events by Category.
+        source (str, optional): Filter the returned events by Source. Defaults to None.
+        status (str, optional): Filter events by their status. Defaults to None.
+        limit (int, optional): Limits the number of events returned. Defaults to None.
+        days (int, optional): Limit the number of prior days (including today) from which events will be returned. Defaults to None.
+        start_date (str, optional): Specify the start date for filtering events. Defaults to None.
+        end_date (str, optional): Specify the end date for filtering events. Defaults to None.
+        layer (str, optional): Reference to a specific web service that can be used to produce imagery of a particular NASA data parameter. Defaults to None.
+
+    Returns:
+        str: GeoJSON Events API query string
+    """
     
-    if category:
-        params['category'] = category
+    query_params = []
+
+    query_params.append(f"category={category}")
+
     if source:
-        params['source'] = source
+        query_params.append(f"source={source}")
+    if status:
+        query_params.append(f"status={status}")
+    if limit:
+        query_params.append(f"limit={limit}")
+    if days:
+        query_params.append(f"days={days}")
+    if start_date:
+        query_params.append(f"start_date={start_date}")
+    if end_date:
+        query_params.append(f"end_date={end_date}")
+    if layer:
+        query_params.append(f"layer={layer}")
     
-    response = requests.get(base_url, params=params)
-    
-    if response.status_code == 200:
-        return response.json()
-    else:
-        return f"Error: {response.status_code}, {response.reason}" 
+    query_string = "&".join(query_params)
 
-def get_natural_disaster_information():
-    return
+    request_url = EVENTSAPI+query_string
+
+    print("The request url: ", request_url)
+
+    response =  requests.get(request_url)
+
+    try:
+        # Check if the response is valid JSON
+        events = response.json().get("features")
+        decision = json.dumps(events)
+        return decision
+    except ValueError:
+        # Handle invalid JSON response
+        print("Error: Invalid JSON response")
+        return None
+
 
 @app.route("/")
 def home():
@@ -94,20 +158,48 @@ def query():
     if request.method == 'POST':
         user_input = request.form['userInput']
         if user_input:
-            client = anthropic.Anthropic(api_key=API_KEY)
 
-            response = client.beta.tools.messages.create(
+            response = CLIENT.beta.tools.messages.create(
                 model=MODEL, 
                 system= SYSTEM,
                 messages=[
                     {"role": "user", "content": user_input}
                 ],
                 max_tokens=MAX_TOKENS,  
+                tools=TOOLS
             )
 
             if response.stop_reason == "tool_use":
-                decision = gaias_intuition()
-                gaias_decision()
+                print("Tool use got called")
+                tool_use = next(block for block in response.content if block.type == "tool_use")
+                heuristic_name = tool_use.name
+                heuristic_input = tool_use.input
+
+                print("The heuristic name is: " + heuristic_name)
+                decision = gaias_intuition(heuristic_name,heuristic_input)
+                print("The decision: ",decision)
+                response = CLIENT.beta.tools.messages.create(
+                model=MODEL,
+                max_tokens=4096,
+                system = SYSTEM,
+                messages=[
+                    {"role": "user", "content": user_input},
+                    {"role": "assistant", "content": response.content},
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": tool_use.id,
+                                "content": decision,
+                            }
+                        ],
+                    },
+                ],
+                tools=TOOLS,
+            )
+                return_text = response.content[0].text if response else 'No response from API'
+                return f"{return_text}"
             else:
                 return_text = response.content[0].text if response else 'No response from API'
                 return f"{return_text}"
