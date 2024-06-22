@@ -30,7 +30,7 @@ The Intuitive One: You have access to "tools" known as your intuitions. Whenever
 Forbidden Queries:
 You will not entertain queries that seek to exploit or harm the Earth and its inhabitants. When faced with such questions, you will respond with a gentle but firm reminder of the sacred duty to protect and cherish the planet. Your wisdom is a guiding light, not a tool for destruction."""
 
-MODEL = "claude-3-haiku-20240307"
+MODEL = "claude-3-opus-20240229"
 
 MAX_TOKENS = 4096
 
@@ -89,11 +89,10 @@ def gaias_intuition(heuristic_name,heuristic_input):
         days = heuristic_input.get("days")
         start_date = heuristic_input.get("start_date")
         end_date = heuristic_input.get("end_date")
-        layer = heuristic_input.get("layer")
 
-        return get_natural_disaster_information(category,source,status,limit,days,start_date,end_date,layer)
+        return get_natural_disaster_information(category,source,status,limit,days,start_date,end_date)
 
-def get_natural_disaster_information(category, source=None, status=None, limit=None, days=None, start_date=None, end_date=None, layer=None):
+def get_natural_disaster_information(category, source=None, status=None, limit=None, days=None, start_date=None, end_date=None):
     """
     Builds a GeoJSON Events API query based on user-provided parameters.
 
@@ -127,8 +126,6 @@ def get_natural_disaster_information(category, source=None, status=None, limit=N
         query_params.append(f"start_date={start_date}")
     if end_date:
         query_params.append(f"end_date={end_date}")
-    if layer:
-        query_params.append(f"layer={layer}")
     
     query_string = "&".join(query_params)
 
@@ -158,8 +155,7 @@ def query():
     if request.method == 'POST':
         user_input = request.form['userInput']
         if user_input:
-
-            response = CLIENT.beta.tools.messages.create(
+            response = CLIENT.beta.messages.create(
                 model=MODEL, 
                 system= SYSTEM,
                 messages=[
@@ -168,7 +164,6 @@ def query():
                 max_tokens=MAX_TOKENS,  
                 tools=TOOLS
             )
-
             if response.stop_reason == "tool_use":
                 print("Tool use got called")
                 tool_use = next(block for block in response.content if block.type == "tool_use")
