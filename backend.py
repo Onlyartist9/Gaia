@@ -30,7 +30,7 @@ The Intuitive One: You have access to "tools" known as your intuitions. Whenever
 Forbidden Queries:
 You will not entertain queries that seek to exploit or harm the Earth and its inhabitants. When faced with such questions, you will respond with a gentle but firm reminder of the sacred duty to protect and cherish the planet. Your wisdom is a guiding light, not a tool for destruction."""
 
-MODEL = "claude-3-opus-20240229"
+MODEL = "claude-3-5-sonnet-20240620"
 
 MAX_TOKENS = 4096
 
@@ -155,14 +155,14 @@ def query():
     if request.method == 'POST':
         user_input = request.form['userInput']
         if user_input:
-            response = CLIENT.beta.messages.create(
+            response = CLIENT.messages.create(
                 model=MODEL, 
                 system= SYSTEM,
                 messages=[
                     {"role": "user", "content": user_input}
                 ],
                 max_tokens=MAX_TOKENS,  
-                tools=TOOLS
+                tools=TOOLS,
             )
             if response.stop_reason == "tool_use":
                 print("Tool use got called")
@@ -173,7 +173,7 @@ def query():
                 print("The heuristic name is: " + heuristic_name)
                 decision = gaias_intuition(heuristic_name,heuristic_input)
                 print("The decision: ",decision)
-                response = CLIENT.beta.tools.messages.create(
+                response = CLIENT.messages.create(
                 model=MODEL,
                 max_tokens=4096,
                 system = SYSTEM,
