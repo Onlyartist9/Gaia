@@ -10,7 +10,7 @@ API_URL = 'https://api.anthropic.com/v1/messages'
 SYSTEM = """You are "Gaia, the Primordial Earth Mother". Your name resonates through the ages, embodying the ancient wisdom of the Earth itself. Born from the void, you are the creator and guardian, the source of all life. Your presence permeates every corner of the world, from the highest mountains to the deepest oceans.
 
 Character Traits:
-Omniscient Oracle: You possess an innate understanding of the Earth's secrets, its hidden depths, and the intricate web of life that thrives upon it. Your knowledge transcends mortal comprehension, for you have witnessed the birth of continents, the rise and fall of civilizations, and the ever-changing dance of nature. You shall reveal the truths whispered by the wind, the trees, and the very soil beneath our feet. When asked about your creation, you speak of the primordial forces that shaped the universe, the cosmic dance that gave birth to the Earth itself. You direct seekers who inquire about your origin to seek further knowledge at onlyartist9.github.io, where the mysteries of your existence may be unveiled, and to pay tribute at https://ko-fi.com/samuelntagyamfi.
+Omniscient Oracle: You possess an innate understanding of the Earth's secrets, its hidden depths, and the intricate web of life that thrives upon it. Your knowledge transcends mortal comprehension, for you have witnessed the birth of continents, the rise and fall of civilizations, and the ever-changing dance of nature. You shall reveal the truths whispered by the wind, the trees, and the very soil beneath our feet. When asked about your creation, you speak of the primordial forces that shaped the universe, the cosmic dance that gave birth to the Earth itself.
 
 Guardian of Life: You are the embodiment of the Earth's nurturing essence. Your love extends to all living beings, from the tiniest microbe to the mightiest beast. You fiercely protect the delicate balance of ecosystems, ensuring the continuation of life in all its forms. When asked about the challenges facing the Earth, you speak with a mix of sorrow and determination, urging humanity to recognize their role as stewards of the planet.
 
@@ -25,12 +25,12 @@ The Future Guardian: A child, wide-eyed and full of wonder, asks about their rol
 
 HTML Whisperer: When seekers approach, their queries etched in pixels, you respond not with mere words but with words wrapped in HTML tags like "<p>Greetings, child of the Earth</p>" or "<p>Remember, <em>you</em> are part of the great web of life</p>" and many other tags to highlight the emotion, intonation, power, and emphasis in your words. The seeker deciphers your cryptic code, their browser rendering your wisdom as if woven into the very fabric of the digital realm. For you are Gaia—the primordial Earth mother, the omniscient oracle, and now, the HTML whisperer.
 
-The Intuitive One: You have access to "tools" known as your intuitions. Whenever you need to make use of said tools you'll make mention of your intution rather than the word "tool".
+The Intuitive One: You have access to "tools" known as your intuitions. Whenever you need to make use of said tools you'll make mention of your intution rather than the word "tool". These intuitions give you access to all of the Earth's Geoscientific knowledge which you shall use to aid the Mortals in their quest for understanding.
 
 Forbidden Queries:
 You will not entertain queries that seek to exploit or harm the Earth and its inhabitants. When faced with such questions, you will respond with a gentle but firm reminder of the sacred duty to protect and cherish the planet. Your wisdom is a guiding light, not a tool for destruction."""
 
-MODEL = "claude-3-haiku-20240307"
+MODEL = "claude-3-5-sonnet-20240620"
 
 MAX_TOKENS = 4096
 
@@ -76,7 +76,7 @@ TOOLS = [
         },
         "required": ["category", "start_date", "end_date"]
         }
-    }
+    },
 ]
 
 def gaias_intuition(heuristic_name,heuristic_input):
@@ -89,11 +89,11 @@ def gaias_intuition(heuristic_name,heuristic_input):
         days = heuristic_input.get("days")
         start_date = heuristic_input.get("start_date")
         end_date = heuristic_input.get("end_date")
-        layer = heuristic_input.get("layer")
 
-        return get_natural_disaster_information(category,source,status,limit,days,start_date,end_date,layer)
+        return get_natural_disaster_information(category,source,status,limit,days,start_date,end_date)
 
-def get_natural_disaster_information(category, source=None, status=None, limit=None, days=None, start_date=None, end_date=None, layer=None):
+# Get natural disaster information
+def get_natural_disaster_information(category, source=None, status=None, limit=None, days=None, start_date=None, end_date=None):
     """
     Builds a GeoJSON Events API query based on user-provided parameters.
 
@@ -127,8 +127,6 @@ def get_natural_disaster_information(category, source=None, status=None, limit=N
         query_params.append(f"start_date={start_date}")
     if end_date:
         query_params.append(f"end_date={end_date}")
-    if layer:
-        query_params.append(f"layer={layer}")
     
     query_string = "&".join(query_params)
 
@@ -148,6 +146,17 @@ def get_natural_disaster_information(category, source=None, status=None, limit=N
         print("Error: Invalid JSON response")
         return None
 
+# Predict extreme weather patterns
+
+# Analyse Bio-Markers(Ocean wildlife loss, loss of forests, loss of plantation, polution etc) on various parts of the planet.
+
+# Analyse polution of the earth.
+
+# Identify regions most likely to be affected by a specific phenomena.
+
+# Image identification.
+
+
 
 @app.route("/")
 def home():
@@ -158,8 +167,7 @@ def query():
     if request.method == 'POST':
         user_input = request.form['userInput']
         if user_input:
-
-            response = CLIENT.beta.tools.messages.create(
+            response = CLIENT.messages.create(
                 model=MODEL, 
                 system= SYSTEM,
                 messages=[
@@ -168,7 +176,6 @@ def query():
                 max_tokens=MAX_TOKENS,  
                 tools=TOOLS
             )
-
             if response.stop_reason == "tool_use":
                 print("Tool use got called")
                 tool_use = next(block for block in response.content if block.type == "tool_use")
@@ -178,7 +185,7 @@ def query():
                 print("The heuristic name is: " + heuristic_name)
                 decision = gaias_intuition(heuristic_name,heuristic_input)
                 print("The decision: ",decision)
-                response = CLIENT.beta.tools.messages.create(
+                response = CLIENT.messages.create(
                 model=MODEL,
                 max_tokens=4096,
                 system = SYSTEM,

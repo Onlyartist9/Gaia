@@ -1,43 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>The Deep</title>
-        <link href="../static/style.css" rel="stylesheet"/>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
-        <script src="../static/htmx.min.js"></script>
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaia</title>
+    <link href="../static/style.css" rel="stylesheet"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="../static/htmx.min.js"></script>
+</head>
+
+<body>
     <div class="Container">
-        <header>
-            <div class="Header">
-                <h1>
-                    The Deep
-                </h1>
-            </div>
+
+        <header class="Header">
+            <h1>Gaia</h1>
         </header>
-        <body class="Content">
-            <div id="loader" class="htmx-indicator">Thinking...</div>
-            <div class="About" id="About">
-                <p>The earth is underexplored.</p>
-                <p>The Deep is your one-stop destination to learn everything about the state of the earth.</p>
-                <p>You can discover their geography, the animals that inhabit them, climate change patterns, and many more.</p>
-                <p>Hope you love it.</p>
-                <p>Inference is expensive as such I would appreciate your support. You can donate <a href="https://ko-fi.com/samuelntagyamfi.">here</a>. Thanks for your support!</p>
-                <p><b><i>The Deep is powered by AI. Therefore, you should use your own judgement when interpreting the output.</i></b></p>
-            </div>
+
+        <main class="Content">
+
+            <section class="About" id="About">
+                <h1>About</h1>
+                <p>Gaia is your guide to understanding the state of the Earth.</p>
+                <p>She can help you discover its geography, the animals that inhabit it, climate change patterns, and more.</p>
+            </section>
+            
+            <div id="output" class="OutputField">Output will appear here.</div>
+
+            <div id="globe" class="GlobeVisualization">Globe visualization will be added here.</div>
+
             <div class="InputField">
-                    <div>
-                        <div>
-                            <form hx-post="/query" hx-target="#About" hx-swap="innerHTML" hx-indicator="#loader">
-                                <input type="text" class="userInput" name="userInput" placeholder="What do you want to know?">
-                                <button class="userInputSubmit"> Ask </button>
-                            </form>
-                        </div>
-                    </div>
+                <form hx-post="/query" hx-target="#output" hx-swap="innerHTML" hx-indicator="#loader">
+                        <input type="text" class="userInput" name="userInput">
+                        <button class="userInputSubmit"> Ask Gaia </button>
+                </form>
             </div>
-        </body>
+            
+        </main>
+
+        <div id="loader" class="htmx-indicator">Thinking...</div>
+
     </div>
+
+</body>
 </html>
