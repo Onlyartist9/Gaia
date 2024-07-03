@@ -178,7 +178,7 @@ def query():
                     {"role": "user", "content": user_input}
                 ],
                 max_tokens=MAX_TOKENS,  
-                tools=TOOLS
+                tools=TOOLS,
             )
             if response.stop_reason == "tool_use":
                 print("Tool use got called")
