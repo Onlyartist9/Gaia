@@ -8,7 +8,7 @@ html {
 
 .Container {
     display: grid;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto;
     grid-template-columns: auto auto;
     margin: 5% 5%;
     border-radius: 10px; /* Rounded corners for the container */
@@ -28,14 +28,14 @@ html {
     display: grid;
     grid-row: 2;
     grid-template-rows: auto auto auto auto;
-    grid-template-columns: auto auto;
+    grid-template-columns: 1fr 1fr;
     padding: 1em;
     border-radius: 10px; /* Rounded corners for the content */
     gap: 25px;
 }
 
 .About {
-    grid-column: 1  2;
+    grid-column: 1/3;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); /* Elevated card look */
     padding: 0.5em;
     color: #8B4513; /* Black text for contrast */
@@ -54,14 +54,14 @@ html {
     grid-column: 2;
     grid-row: 2;
     padding: 1em;
-    background-color: #000; /* Black background */
-    border-radius: 10px; /* Rounded corners for the globe visualization */
+    background-color: #000;
+    border-radius: 10px; 
 }
 
 
 .InputField {
     grid-column: 1/3;
-    grid-row: 3/4;
+    grid-row: 4;
     padding: 5%;
     justify-content: center; 
     border-radius: 50px; 
@@ -91,9 +91,11 @@ input[type="text"] {
 .htmx-indicator {
     opacity: 0;
     transition: opacity 500ms ease-in;
-    border-radius: 10px; /* Rounded corners for the htmx indicator */
 }
 
-.htmx-request .htmx-indicator {
-    opacity: 1
+.htmx-request .htmx-indicator{
+    opacity:1
+}
+.htmx-request.htmx-indicator{
+    opacity:1
 }

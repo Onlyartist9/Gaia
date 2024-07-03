@@ -1,6 +1,6 @@
 import json
 import os
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 import anthropic
 import requests
 
@@ -40,21 +40,24 @@ EVENTSAPI = "https://eonet.gsfc.nasa.gov/api/v3/events/geojson?"
 
 TOOLS = [
     {
-    "name": "disaster_information",
-    "description": "Retrieves information about natural disasters, formatted as GeoJSON. For example, to get information on 'wildfires' from 'NASA' and 'NOAA' sources that are 'active' within the last '7' days, and limit the results to '5' events with start date '2024-04-15' and end date '2024-04-22'.",
+    "name": "natural_event_information",
+    "description": "Retrieves information about natural events, formatted as GeoJSON. For example, to get information on 'wildfires' from 'NASA' and 'NOAA' sources that are 'active' within the last '7' days, and limit the results to '5' events with start date '2024-04-15' and end date '2024-04-22'.",
     "input_schema": {
         "type": "object",
         "properties": {
             "category": {
                 "type": "string",
+                "enum":['drought','snow', 'dustHaze', 'earthquakes', 'floods', 'landslides', 'manmade', 'seaLakeIce', 'severeStorms', 'tempExtremes', 'volcanoes', 'waterColor', 'wildfires'],
                 "description": "Filter the returned events by Category. Acceptable Categories include 'drought', 'dustHaze', 'earthquakes', 'floods', 'landslides', 'manmade', 'seaLakeIce', 'severeStorms', 'tempExtremes', 'volcanoes', 'waterColor', and 'wildfires'. Multiple sources can be included in the parameter: comma separated, operates as a boolean OR. Example: 'earthquakes','severeStorms,wildfires'."
             },
             "source": {
                 "type": "string",
-                "description": "Filter the returned events by Source. Acceptable Sources include 'AVO', 'ABFIRE', 'AU_BOM', 'BYU_ICE', 'BCWILDFIRE','CALFIRE', 'CEMS', 'EO', 'FEMA', 'FloodList', 'GDACS', 'GLIDE', 'InciWeb', 'IDC', 'JTWC', 'MRR', 'MBFIRE', 'NASA_ESRS', 'NASA_DISP', 'NASA_HURR', 'NOAA_NHC', 'NOAA_CPC', 'PDC', 'ReliefWeb', 'SIVolcano', 'NATICE', 'UNISYS', 'USGS_EHP', 'USGS_CMT', 'HDDS', and 'DFES_WA'. Multiple sources can be included, separated by commas, and operate as a boolean OR. Example: 'NASA_ESRS','NASA_ESRS,NOAA_CPC'. Avoid using this parameter unless explicitly requested."
+                "enum":['AVO', 'ABFIRE', 'AU_BOM', 'BYU_ICE', 'BCWILDFIRE','CALFIRE', 'CEMS', 'EO', 'FEMA', 'FloodList', 'GDACS', 'GLIDE', 'InciWeb', 'IDC', 'JTWC', 'MRR', 'MBFIRE', 'NASA_ESRS', 'NASA_DISP', 'NASA_HURR', 'NOAA_NHC', 'NOAA_CPC', 'PDC', 'ReliefWeb', 'SIVolcano', 'NATICE', 'UNISYS', 'USGS_EHP', 'USGS_CMT', 'HDDS', 'DFES_WA'],
+                "description": "Filter the returned events by Source. Multiple sources can be included, separated by commas, and with operators such as the boolean 'OR'. Example: 'NASA_ESRS','NASA_ESRS,NOAA_CPC'."
             },
             "status": {
                 "type": "string",
+                "enum":['open','closed'],
                 "description": "Filter events by their status. Omitting the status parameter will return only the currently open events. The status is either open or closed or all Example: 'open'."
             },
             "limit": {
@@ -80,7 +83,7 @@ TOOLS = [
 ]
 
 def gaias_intuition(heuristic_name,heuristic_input):
-    if heuristic_name == "disaster_information":
+    if heuristic_name == "natural_event_information":
         print("The heuristic input:", heuristic_input)
         category = heuristic_input.get("category")
         source = heuristic_input.get("source")
@@ -90,10 +93,10 @@ def gaias_intuition(heuristic_name,heuristic_input):
         start_date = heuristic_input.get("start_date")
         end_date = heuristic_input.get("end_date")
 
-        return get_natural_disaster_information(category,source,status,limit,days,start_date,end_date)
+        return get_natural_event_information(category,source,status,limit,days,start_date,end_date)
 
-# Get natural disaster information
-def get_natural_disaster_information(category, source=None, status=None, limit=None, days=None, start_date=None, end_date=None):
+
+def get_natural_event_information(category, source=None, status=None, limit=None, days=None, start_date=None, end_date=None):
     """
     Builds a GeoJSON Events API query based on user-provided parameters.
 
@@ -150,12 +153,13 @@ def get_natural_disaster_information(category, source=None, status=None, limit=N
 
 # Analyse Bio-Markers(Ocean wildlife loss, loss of forests, loss of plantation, polution etc) on various parts of the planet.
 
-# Analyse polution of the earth.
+# Analyse pollution of the earth.
 
 # Identify regions most likely to be affected by a specific phenomena.
 
 # Image identification.
 
+# Personal data analysis.
 
 
 @app.route("/")
@@ -206,10 +210,17 @@ def query():
                 tools=TOOLS,
             )
                 return_text = response.content[0].text if response else 'No response from API'
-                return f"{return_text}"
+                data = {
+                    "Claude_Response": return_text,
+                    "GeoJSON": decision
+                }
+                return jsonify(data)
             else:
                 return_text = response.content[0].text if response else 'No response from API'
-                return f"{return_text}"
+                data = {
+                    "Claude_Response": return_text,
+                }
+                return data
         else:
             return "<h1>Why do you hesitate seeker? Ask what your heart desires.</h1>"
 

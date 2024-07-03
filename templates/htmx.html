@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="../static/htmx.min.js"></script>
+    <script src="//unpkg.com/globe.gl"></script>
 </head>
 
 <body>
@@ -18,17 +19,31 @@
             <h1>Gaia</h1>
         </header>
 
-        <main class="Content">
+        <main class="Content" id="mainContent">
 
             <section class="About" id="About">
                 <h1>About</h1>
-                <p>Gaia is your guide to understanding the state of the Earth.</p>
-                <p>She can help you discover its geography, the animals that inhabit it, climate change patterns, and more.</p>
-            </section>
-            
-            <div id="output" class="OutputField">Output will appear here.</div>
+                <p>Gaia is your guide to understanding the state of the Earth. Ask her to teach you something about the planet we live on or better yet, ask her about natural events that have taken place in a given time frame...</p>
+                <b><p>Guide to inquiry:</p></b>
+                <ul>
+                    <li>
+                        Gaia has no memory. Given a response regarding natural events make use of the information she provides to inform your next query.
+                    </li>
+                    <li>
+                        You'll often be asked to be more specific with your request for natural events.
+                    </li>
+                    <li>
+                        Gaia's responses will often provide answers for major/significant natural events. 
+                    </li>
+                </ul>
 
-            <div id="globe" class="GlobeVisualization">Globe visualization will be added here.</div>
+            </section>
+
+            <div id="loader" class="htmx-indicator">Thinking...</div>
+            <div id="output" class="OutputField">
+            </div>
+
+            <div id="globe" class="GlobeVisualization"></div>
 
             <div class="InputField">
                 <form hx-post="/query" hx-target="#output" hx-swap="innerHTML" hx-indicator="#loader">
@@ -39,9 +54,91 @@
             
         </main>
 
-        <div id="loader" class="htmx-indicator">Thinking...</div>
-
     </div>
 
 </body>
+
+<script>
+    document.addEventListener("htmx:load", function() {
+        let outputField = document.getElementById("output");
+        let globeVisualization = document.getElementById("globe");
+        let mainContent = document.getElementById("mainContent");
+
+        outputField.style.visibility = "hidden";
+        globeVisualization.style.visibility = "hidden";
+    });
+
+    document.addEventListener("htmx:afterOnLoad", function(evt) {
+        let outputField = document.getElementById("output");
+        let globeVisualization = document.getElementById("globe");
+        let mainContent = document.getElementById("mainContent");
+
+        const Data = evt.detail.xhr.response;
+        const parsedData = JSON.parse(Data)
+
+        try {
+            let Claude_Response = parsedData.Claude_Response;
+
+            console.log("Claude's Response:", Claude_Response);
+
+            if (parsedData.GeoJSON) {
+                if(parsedData.GeoJSON.length > 0){
+                    globeVisualization.style.visibility = "visible";
+
+                    console.log("The Geo JSON data:", parsedData.GeoJSON);
+                    
+                    const GeoJSON = JSON.parse(parsedData.GeoJSON);
+
+                    const coordinates = GeoJSON.map(feature => feature.geometry.coordinates);
+
+                    console.log("The coordinates: ", coordinates);
+                    
+                    function transformCoordinates(coordinates) {
+                        return coordinates.map(([lng, lat]) => ({
+                            lat: lat,
+                            lng: lng
+                        }));
+                    }
+
+                    categorizedData = transformCoordinates(coordinates);
+
+                    console.log("The coordinates: ", categorizedData);
+
+                    const globe = Globe()
+                    .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+                    .pointsData(categorizedData)
+                    .pointAltitude(0.5)
+                    .pointColor(() => 's')
+                    .width(400)
+                    .height(400)
+                    .backgroundColor("#000000")
+                    (globeVisualization);
+
+
+                    outputField.style.visibility = "visible";
+                    outputField.innerHTML = Claude_Response;
+
+                    return
+
+                }else{
+                    outputField.style.visibility = "visible";
+                    outputField.style.columnWidth = "span 2";
+                    outputField.innerHTML = Claude_Response;
+                    return
+                }
+        }
+
+        if (Claude_Response) {
+                outputField.style.visibility = "visible";
+                outputField.style.columnWidth = "span 2";
+                outputField.innerHTML = Claude_Response;
+                return
+        }
+            
+        } catch (error) {
+            console.error("Error parsing JSON:", error);
+        }
+    });
+</script>
+
 </html>
