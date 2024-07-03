@@ -1,5 +1,7 @@
 # Gaia.
 
+![Screenshot of Gaia](https://github.com/Onlyartist9/Gaia/blob/main/static/Gaia.png)
+
 ## About.
 Gaia is a Claude-infused bot that informs users about the state of the earth. Currently, her feature set revolves around information about natural events/disasters of a certain magnitude and their visualization.
 
